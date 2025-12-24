@@ -9,12 +9,7 @@ import (
 	waLog "go.mau.fi/whatsmeow/util/log"
 )
 
-func NewClient(ctx context.Context) *whatsmeow.Client {
-	dbLog := waLog.Stdout("Database", "ERROR", true)
-	container, err := sqlstore.New(ctx, "sqlite3", "file:wa.db?_foreign_keys=on", dbLog)
-	if err != nil {
-		panic(err)
-	}
+func NewClient(ctx context.Context, container *sqlstore.Container) *whatsmeow.Client {
 	deviceStore, err := container.GetFirstDevice(ctx)
 	if err != nil {
 		panic(err)

@@ -11,6 +11,7 @@ import (
 	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
+	waLog "go.mau.fi/whatsmeow/util/log"
 )
 
 type Group struct {
@@ -37,6 +38,7 @@ type ChatElement struct {
 // Api struct
 type Api struct {
 	ctx          context.Context
+	cw           *wa.ContainerWrapper
 	waClient     *whatsmeow.Client
 	messageStore *mstore.MessageStore
 }
@@ -50,7 +52,13 @@ func New() *Api {
 // so we can call the runtime methods
 func (a *Api) Startup(ctx context.Context) {
 	a.ctx = ctx
-	a.waClient = wa.NewClient(ctx)
+	dbLog := waLog.Stdout("Database", "ERROR", true)
+	var err error
+	a.cw, err = wa.NewContainerWrapper(ctx, "sqlite3", "file:wa.db?_foreign_keys=on", dbLog)
+	if err != nil {
+		panic(err)
+	}
+	a.waClient = wa.NewClient(ctx, a.cw.GetContainer())
 	a.messageStore = mstore.NewMessageStore()
 }
 
@@ -70,6 +78,10 @@ func (a *Api) Login() error {
 				runtime.EventsEmit(a.ctx, "wa:status", evt.Event)
 			}
 		}
+		// load only once
+		// TODO: add a global flag system for such things
+		// if the initialised is 1 => don't load again else do this
+		a.cw.Initialise(a.ctx, a.waClient)
 	} else {
 		runtime.EventsEmit(a.ctx, "wa:status", "logged_in")
 		fmt.Println("Already logged in, connecting...")
@@ -141,19 +153,32 @@ func (a *Api) GetChatList() ([]ChatElement, error) {
 	cmList := a.messageStore.GetChatList()
 	ce := make([]ChatElement, len(cmList))
 	for i, cm := range cmList {
-		contact, err := a.waClient.Store.Contacts.GetContact(a.ctx, cm.JID)
-		if err != nil {
-			return nil, err
-		}
-		ce[i] = ChatElement{
-			LatestMessage: cm.MessageText,
-			Contact: Contact{
+		var fc Contact
+		if cm.JID.Server == types.GroupServer {
+			groupInfo, err := a.cw.FetchGroup(cm.JID.String())
+			if err != nil {
+				return nil, err
+			}
+			fc = Contact{
+				JID:      cm.JID.String(),
+				FullName: groupInfo.Name,
+			}
+		} else {
+			contact, err := a.waClient.Store.Contacts.GetContact(a.ctx, cm.JID)
+			if err != nil {
+				return nil, err
+			}
+			fc = Contact{
 				JID:        cm.JID.String(),
 				Short:      contact.FirstName,
 				FullName:   contact.FullName,
 				PushName:   contact.PushName,
 				IsBusiness: contact.BusinessName != "",
-			},
+			}
+		}
+		ce[i] = ChatElement{
+			LatestMessage: cm.MessageText,
+			Contact:       fc,
 		}
 	}
 	return ce, nil
