@@ -515,13 +515,25 @@ function MessageItem({ message, chatId, sentMediaCache }: { message: store.Messa
     const isSticker = !!message.Content?.stickerMessage;
     const isImageOrVideo = !!(message.Content?.imageMessage || message.Content?.videoMessage);
     const timeStr = new Date(message.Info.Timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    var senderName = message.Info.PushName;
-    if (message.Info.Sender && !message.Info.Sender.toString().endsWith("lid")) {
-        GetContact(message.Info.Sender).then((contact: any) => {
-            senderName = contact.full_name || senderName || contact.jid;
-        }).catch(() => {
-            senderName = senderName || message.Info.Sender.toString();
-        });
+    
+    let senderName =
+    message?.Info?.PushName ??
+    message?.Info?.Sender?.toString?.() ??
+    "Unknown";
+
+    const sender = message?.Info?.Sender;
+
+    if (sender && typeof sender.toString === "function" && !sender.toString().endsWith("lid")) {
+        GetContact(sender)
+            .then((contact: any) => {
+                senderName =
+                    contact?.full_name ??
+                    senderName ??
+                    sender.toString();
+            })
+            .catch(() => {
+                senderName = senderName ?? sender.toString();
+            });
     }
 
     // Check for quoted message
