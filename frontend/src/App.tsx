@@ -32,13 +32,13 @@ function App() {
   }, [theme])
 
   const toggleTheme = () => {
-    setTheme((prev) => (prev === "light" ? "dark" : "light"))
+    setTheme(prev => (prev === "light" ? "dark" : "light"))
   }
 
   useEffect(() => {
     Login()
 
-    GetCustomCSS().then((css) => {
+    GetCustomCSS().then(css => {
       if (css) {
         const style = document.createElement("style")
         style.id = "custom-css"
@@ -47,7 +47,7 @@ function App() {
       }
     })
 
-    GetCustomJS().then((js) => {
+    GetCustomJS().then(js => {
       if (js) {
         const script = document.createElement("script")
         script.id = "custom-js"
@@ -75,9 +75,9 @@ function App() {
 
     const unsubDownload = EventsOn("download:complete", (fileName: string) => {
       const id = Date.now()
-      setNotifications((prev) => [...prev, { id, message: `Downloaded: ${fileName}` }])
+      setNotifications(prev => [...prev, { id, message: `Downloaded: ${fileName}` }])
       setTimeout(() => {
-        setNotifications((prev) => prev.filter((n) => n.id !== id))
+        setNotifications(prev => prev.filter(n => n.id !== id))
       }, 3000)
     })
 
@@ -95,7 +95,7 @@ function App() {
       } relative`}
     >
       <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
-        {notifications.map((n) => (
+        {notifications.map(n => (
           <div key={n.id} className="bg-zinc-800 text-white px-4 py-2 rounded shadow-lg">
             {n.message}
           </div>
