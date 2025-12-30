@@ -13,6 +13,26 @@
   --color-green: #21c063;
   --color-hover-icons: #2d2e2e;
 
+  /* Dropdown */
+  --color-dropdown-text: #000000;
+  --color-dropdown-dark-text: #ffffff;
+
+  --color-dropdown-bg: #ffffff;
+  --color-dropdown-dark-bg: #0d0d0d;
+  --color-dropdown-hover-bg: #f5f5f5;
+  --color-dropdown-dark-hover-bg: #3a3a3a;
+
+  --color-dropdown-element-text: #000000;
+  --color-dropdown-element-dark-text: #ffffff;
+
+  --color-dropdown-element-bg: #ffffff;
+  --color-dropdown-element-dark-bg: #0d0d0d;
+  --color-dropdown-element-hover-bg: #f5f5f5;
+  --color-dropdown-element-dark-hover-bg: #3a3a3a;
+
+  --color-dropdown-border: #dcdcdc50;
+  --color-dropdown-dark-border: #dcdcdc50;
+
   /* Keyboard Shortcuts */
   --color-shortcut-bg: #ffffff;
   --color-shortcut-dark-bg: #323232;

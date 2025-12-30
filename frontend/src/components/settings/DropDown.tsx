@@ -1,6 +1,7 @@
 import gsap from "gsap"
 import { useGSAP } from "@gsap/react"
 import { useState, useRef, useEffect } from "react"
+import clsx from "clsx"
 
 const DropDown = ({
   title,
@@ -79,7 +80,7 @@ const DropDown = ({
     <div ref={containerRef} className="flex flex-col">
       <div className="font-semibold mb-2">{title}</div>
       <div
-        className="cursor-pointer flex items-center justify-between p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-colors border border-white/50"
+        className="bg-dropdown-bg dark:bg-dropdown-dark-bg cursor-pointer flex items-center justify-between p-2 hover:bg-dropdown-hover-bg dark:hover:bg-dropdown-dark-hover-bg rounded-md transition-colors border border-dropdown-border dark:border-dropdown-dark-border text-dropdown-text dark:text-dropdown-dark-text"
         onClick={toggleOpen}
       >
         <div className="flex items-center gap-2">
@@ -91,13 +92,16 @@ const DropDown = ({
         </span>
       </div>
       <div ref={dropdownRef} className="overflow-hidden" style={{ height: 0, opacity: 0 }}>
-        <div className="mt-2 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700">
+        <div className="mt-2 bg-dropdown-element-bg dark:bg-dropdown-element-dark-bg rounded-md shadow-lg border border-dropdown-border dark:border-dropdown-border">
           {elements.map((element, index) => (
             <div
               key={index}
-              className={`p-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors ${
-                selectedElement === element ? "bg-gray-100 dark:bg-gray-700" : ""
-              }`}
+              className={clsx(
+                "p-2 hover:bg-dropdown-element-hover-bg dark:hover:bg-dropdown-element-dark-hover-bg cursor-pointer transition-colors text-dropdown-element-text dark:text-dropdown-element-dark-text",
+                selectedElement === element
+                  ? "bg-dropdown-element-hover-bg dark:bg-dropdown-element-dark-hover-bg"
+                  : "",
+              )}
               onClick={() => handleSelect(element)}
             >
               {element}
