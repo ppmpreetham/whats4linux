@@ -17,18 +17,17 @@ export function MediaContent({ message, type, chatId, sentMediaCache }: MediaCon
     const content = message.Content as any
     const messageBody = content?.[`${type}Message`]
 
-    // 1. Check for Optimistic (Temporary) Media
+    // Check for Optimistic (Temporary) Media
     if (messageBody?._tempImage) {
       setMediaSrc(messageBody._tempImage)
     } else if (messageBody?._tempFile) {
-      // If it's a File object, convert to URL
       const url = URL.createObjectURL(messageBody._tempFile)
       setMediaSrc(url)
     } else if (sentMediaCache?.current.has(message.Info.ID)) {
       setMediaSrc(sentMediaCache.current.get(message.Info.ID)!)
     }
 
-    // 2. Auto-download stickers
+    // Auto-download stickers
     if (type === "sticker") handleDownload()
   }, [message.Info.ID])
 
@@ -52,9 +51,7 @@ export function MediaContent({ message, type, chatId, sentMediaCache }: MediaCon
       return (
         <img
           src={mediaSrc}
-          className={
-            type === "image" ? "max-w-full rounded-lg" : "object-contain w-[195px] h-[195px]"
-          }
+          className={type === "image" ? "max-w-full rounded-lg" : "object-contain w-48.75 h-48.75"}
           alt="media"
         />
       )

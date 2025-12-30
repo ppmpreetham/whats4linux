@@ -105,9 +105,9 @@ export function MessageItem({ message, chatId, sentMediaCache }: MessageItemProp
 
       return (
         <div className="flex flex-col">
-          <div className="flex items-center gap-3 bg-black/5 dark:bg-white/5 p-2 rounded-lg min-w-[240px]">
+          <div className="flex items-center gap-3 bg-black/5 dark:bg-white/5 p-2 rounded-lg min-w-60">
             <div className="w-10 h-12 bg-red-500 rounded flex items-center justify-center text-white font-bold text-[10px] relative">
-              <div className="absolute top-0 right-0 border-t-[10px] border-r-[10px] border-t-white/20 border-r-transparent"></div>
+              <div className="absolute top-0 right-0 border-t-10 border-r-10 border-t-white/20 border-r-transparent"></div>
               {extension.slice(0, 4)}
             </div>
             <div className="flex-1 min-w-0 text-left">

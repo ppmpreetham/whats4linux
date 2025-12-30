@@ -1,8 +1,9 @@
-import React from "react"
+import React, { lazy, Suspense } from "react"
 import clsx from "clsx"
 import data from "@emoji-mart/data"
-import Picker from "@emoji-mart/react"
 import { EmojiIcon, AttachIcon, SendIcon } from "../../assets/svgs/chat_icons"
+
+const EmojiPicker = lazy(() => import("@emoji-mart/react"))
 
 interface ChatInputProps {
   inputText: string
@@ -122,34 +123,36 @@ export function ChatInput({
 
   return (
     <div className="relative p-3 bg-light-secondary dark:bg-[#202c33]">
-      {/* Emoji Picker */}
       {showEmojiPicker && (
         <div ref={emojiPickerRef} className="absolute bottom-20 left-4 z-50">
-          <Picker
-            data={data}
-            onEmojiSelect={handleEmojiSelect}
-            theme="auto"
-            previewPosition="none"
-            skinTonePosition="search"
-          />
+          <Suspense fallback={<div className="p-4 text-sm">Loading emojis...</div>}>
+            <EmojiPicker
+              data={data}
+              onEmojiSelect={handleEmojiSelect}
+              theme="auto"
+              previewPosition="none"
+              skinTonePosition="search"
+            />
+          </Suspense>
         </div>
       )}
 
-      {/* Image Preview */}
+      {/* Image Preview (pasted) */}
       {pastedImage && <ImagePreview imageSrc={pastedImage} onRemove={onRemoveFile} />}
 
-      {/* File Preview */}
+      {/* File Preview (attached) */}
       {selectedFile && (
         <FilePreview file={selectedFile} fileType={selectedFileType} onRemove={onRemoveFile} />
       )}
 
+      {/* Main Input Row */}
       <div className="flex items-end gap-2">
         {/* Emoji Button */}
         <IconButton ref={emojiButtonRef} onClick={onToggleEmojiPicker} title="Emoji">
           <EmojiIcon />
         </IconButton>
 
-        {/* Attach File Button */}
+        {/* Attach Button */}
         <IconButton onClick={() => fileInputRef.current?.click()} title="Attach file">
           <AttachIcon />
         </IconButton>
@@ -187,8 +190,7 @@ export function ChatInput({
           disabled={!hasContent}
           className={clsx(
             "p-2 rounded-full text-white transition-colors",
-            "bg-green-500 hover:bg-green-600",
-            "disabled:opacity-50 disabled:cursor-not-allowed",
+            hasContent ? "bg-green-500 hover:bg-green-600" : "bg-green-500/50 cursor-not-allowed",
           )}
         >
           <SendIcon />
