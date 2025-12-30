@@ -281,6 +281,8 @@ func (a *Api) DownloadMedia(chatJID string, messageID string) (string, error) {
 	return base64.StdEncoding.EncodeToString(data), nil
 }
 
+var tmpProfileCache = misc.NewVMap[string, string]()
+
 func (a *Api) GetChatList() ([]ChatElement, error) {
 	cmList := a.messageStore.GetChatList()
 	ce := make([]ChatElement, len(cmList))
@@ -309,12 +311,17 @@ func (a *Api) GetChatList() ([]ChatElement, error) {
 			}
 		}
 
-		pic, _ := a.waClient.GetProfilePictureInfo(a.ctx, cm.JID, &whatsmeow.GetProfilePictureParams{
-			Preview: true,
-		})
-		if pic != nil {
-			fc.AvatarURL = pic.URL
+		url, ok := tmpProfileCache.Get(cm.JID.User)
+		if !ok {
+			pic, _ := a.waClient.GetProfilePictureInfo(a.ctx, cm.JID, &whatsmeow.GetProfilePictureParams{
+				Preview: true,
+			})
+			if pic != nil {
+				url = pic.URL
+			}
+			tmpProfileCache.Set(cm.JID.User, url)
 		}
+		fc.AvatarURL = url
 
 		ce[i] = ChatElement{
 			LatestMessage: cm.MessageText,
