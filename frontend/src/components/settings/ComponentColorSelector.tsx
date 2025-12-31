@@ -75,7 +75,7 @@ const ComponentColorSelector = () => {
       <div className="flex flex-col justify-between w-1/3">
         <div>
           <h3 className="text-sm font-bold opacity-50 mb-4 uppercase tracking-wider">
-            Customize UI
+            Customize Colors
           </h3>
           <DropDown
             title=""
@@ -129,9 +129,7 @@ const ComponentColorSelector = () => {
                     const value = (draft as any)[selectedComponent][label]
                     return (
                       <div key={label} className="flex flex-col gap-1">
-                        <label className="text-[10px] font-bold uppercase opacity-50">
-                          {label}
-                        </label>
+                        <label className="text-md font-bold uppercase opacity-50">{label}</label>
                         <div className="flex items-center gap-2">
                           <div className="relative flex-1">
                             <input
@@ -140,7 +138,7 @@ const ComponentColorSelector = () => {
                               onChange={e =>
                                 handleDraftChange(selectedComponent, label as any, e.target.value)
                               }
-                              className="w-full border dark:border-zinc-700 rounded bg-transparent px-2 py-1.5 text-xs font-mono"
+                              className="w-full border dark:border-zinc-700 rounded bg-transparent px-2 py-1.5 text-sm font-mono focus:outline-none"
                             />
                           </div>
                           <input
