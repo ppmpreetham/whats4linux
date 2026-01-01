@@ -19,8 +19,12 @@ const PRESETS: Record<string, string> = {
   "bounce.out":
     "M0,500 C70,500 121,281 136,219.5 156.5,136 177,18.5 181,0 185,7.5 207,63.5 227.5,94.5 255,137 286.5,123.5 293,119 331,94 359.5,9.5 363,1 394,43 420,32 429.5,25 439,18 448.5,7.5 455.5,1 461,3 469.5,8 477,8 484.5,8 500,0 500,0",
   "circ.out": "M0,500 C0,296 121,171.5 147.5,145.5 173,120 292,0 500,0",
+  "elastic.out":
+    "M0,500 C0,500 35,500 35,500 56,500 68,362 82,342 101,315 119,678 136,678 149,678 163,454 179,442 198,427 217,543 234,543 246,543 262,488 280,483 299,477 319,510 334,510 346,510 365,496 381,495 399,493 421,502 434,502 453,502 500,0 500,0",
+
   "expo.out": "M0,500 C42,195 107,99 140,72 178,41 187,0 500,0",
   "sine.out": "M0,500 C133,294 218,173 282.5,112.5 304.5,92 390,0 500,0",
+  slowmo: "M0,500 C35,430 70,360 150,335 230,310 270,190 350,165 430,140 465,70 500,0",
   "back.inOut":
     "M0,500 C34,500 64,530.5 87.5,540.5 112,551 133.5,553.5 157.5,532.5 192,502 224.5,373.5 232.5,338.5 252.5,249.5 260.5,199 280,110.5 294,46 325.5,-21 352.5,-41 374,-57 399.5,-47 408.5,-42.5 434,-30.5 469,1 500,0",
 }
@@ -38,6 +42,7 @@ const GSAPMasterVisualizer = () => {
   const [prop, setProp] = useState<string | null>(null)
   const { eases, updateEase: saveEaseToStore } = useEaseStore()
 
+  const [draftEase, setDraftEase] = useState(INITIAL_EASE_STRING)
   const [easeString, setEaseString] = useState(INITIAL_EASE_STRING)
   const [dirty, setDirty] = useState(false)
   const [isInvalid, setIsInvalid] = useState(false)
@@ -53,15 +58,19 @@ const GSAPMasterVisualizer = () => {
   const tweenRef = useRef<gsap.core.Tween | null>(null)
   const editorRef = useRef<any>(null)
 
-  // Load stored ease when selection changes
-  useEffect(() => {
-    if (component && prop && (eases as any)[component][prop]) {
-      const storedPath = (eases as any)[component][prop]
-      setEaseString(storedPath)
-      setDirty(false)
-      // Ideally, you'd convert 0-1 string back to 0-500 SVG grid path here
-    }
-  }, [component, prop, eases])
+  const scaleToGrid = (normalizedPath: string) => {
+    let index = 0
+    return normalizedPath.replace(/-?\d+(\.\d+)?/g, match => {
+      const val = parseFloat(match)
+      const isY = index % 2 !== 0
+      index++
+
+      if (isY) {
+        return (500 - val * 500).toFixed(3)
+      }
+      return (val * 500).toFixed(3)
+    })
+  }
 
   const refreshPreviewEase = useCallback(() => {
     if (!editorRef.current || !jointRef.current) return
@@ -84,9 +93,17 @@ const GSAPMasterVisualizer = () => {
 
     if (!errored) {
       setDirty(true)
+
+      if (component && prop) {
+        ;(saveEaseToStore as (component: any, prop: any, normalized: any) => void)(
+          component,
+          prop,
+          normalized,
+        )
+      }
+
       const newEase = CustomEase.create(`liveEase_${Date.now()}`, normalized)
 
-      // FIX: Kill old and restart new loop
       tweenRef.current?.kill()
       gsap.set(jointRef.current, { attr: { cy: 500 } })
 
@@ -98,14 +115,41 @@ const GSAPMasterVisualizer = () => {
         onUpdate() {
           const p = this.progress()
           const cy = gsap.getProperty(jointRef.current, "cy") as number
-          const val = 500 - cy
           if (progressTextRef.current) progressTextRef.current.textContent = p.toFixed(2)
-          if (valueTextRef.current) valueTextRef.current.textContent = Math.round(val).toString()
+          if (valueTextRef.current)
+            valueTextRef.current.textContent = Math.round(500 - cy).toString()
           if (horizontalFillRef.current) gsap.set(horizontalFillRef.current, { scaleX: p })
         },
       })
     }
-  }, [duration])
+  }, [duration, component, prop, saveEaseToStore])
+
+  useEffect(() => {
+    if (component && prop) {
+      const rawStoredValue = (eases as any)[component][prop]
+
+      if (rawStoredValue) {
+        const normalizedPath = PRESETS[rawStoredValue] || rawStoredValue
+
+        if (normalizedPath.startsWith("M")) {
+          setEaseString(normalizedPath)
+          setDirty(false)
+
+          const gridPath = scaleToGrid(normalizedPath)
+
+          if (mainPathRef.current && revealPathRef.current) {
+            gsap.set([mainPathRef.current, revealPathRef.current], {
+              attr: { d: gridPath },
+            })
+          }
+
+          if (editorRef.current) {
+            editorRef.current.init()
+          }
+        }
+      }
+    }
+  }, [component, prop])
 
   const handlePresetChange = useCallback(
     (name: string) => {
@@ -128,10 +172,8 @@ const GSAPMasterVisualizer = () => {
   useEffect(() => {
     if (!mainPathRef.current || !jointRef.current) return
 
-    // Setup initial circle pos
     gsap.set(jointRef.current, { attr: { cx: 500, cy: 500 } })
 
-    // Initial loop
     tweenRef.current = gsap.to(jointRef.current, {
       duration,
       repeat: -1,
@@ -146,13 +188,11 @@ const GSAPMasterVisualizer = () => {
       },
     })
 
-    // Setup PathEditor with Snap Logic
     editorRef.current = PathEditor.create(mainPathRef.current, {
       handleSize: 12,
       draggable: true,
       selected: true,
       anchorSnap: (p: { x: number; y: number }) => {
-        // 1. Hard Corner Snapping
         if (p.x * p.x + (p.y - 500) * (p.y - 500) < 256) {
           p.x = 0
           p.y = 500
@@ -161,7 +201,7 @@ const GSAPMasterVisualizer = () => {
           p.x = 500
           p.y = 0
         }
-        // 2. Bound X movement
+
         if (p.x < 0) p.x = 0
         if (p.x > 500) p.x = 500
       },
