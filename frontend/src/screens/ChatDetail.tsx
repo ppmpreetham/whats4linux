@@ -36,13 +36,12 @@ export function ChatDetail({ chatId, chatName, chatAvatar, onBack }: ChatDetailP
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [initialLoad, setInitialLoad] = useState(true)
   const [isReady, setIsReady] = useState(false)
-  const [showScrollButton, setShowScrollButton] = useState(false)
 
   const messageListRef = useRef<MessageListHandle>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const emojiPickerRef = useRef<HTMLDivElement>(null) // Added
-  const emojiButtonRef = useRef<HTMLButtonElement>(null) // Added
+  const emojiPickerRef = useRef<HTMLDivElement>(null)
+  const emojiButtonRef = useRef<HTMLButtonElement>(null)
   const sentMediaCache = useRef<Map<string, string>>(new Map())
   const isComposingRef = useRef(false)
 
@@ -99,18 +98,6 @@ export function ChatDetail({ chatId, chatName, chatAvatar, onBack }: ChatDetailP
       setIsLoadingMore(false)
     }
   }, [chatId, hasMore, isLoadingMore, messages, prependMessages])
-
-  const handleScrollRangeChanged = useCallback(
-    (range: { startIndex: number; endIndex: number }) => {
-      const totalItems = chatMessages.length
-      if (totalItems > 0 && range.endIndex < totalItems - 5) {
-        setShowScrollButton(true)
-      } else {
-        setShowScrollButton(false)
-      }
-    },
-    [chatMessages.length],
-  )
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInputText(e.target.value)
@@ -182,14 +169,15 @@ export function ChatDetail({ chatId, chatName, chatAvatar, onBack }: ChatDetailP
     const unsub = EventsOn("wa:new_message", (data: { chatId: string; message: store.Message }) => {
       if (data?.chatId === chatId) {
         updateMessage(data.chatId, data.message)
-        if (!showScrollButton) {
+
+        requestAnimationFrame(() => {
           scrollToBottom(false)
-        }
+        })
       }
     })
-    return () => unsub()
-  }, [chatId, updateMessage, scrollToBottom, showScrollButton])
 
+    return () => unsub()
+  }, [chatId, updateMessage, scrollToBottom])
   return (
     <div className="flex flex-col h-full bg-[#efeae2] dark:bg-[#0b141a]">
       <ChatHeader chatName={chatName} chatAvatar={chatAvatar} onBack={onBack} />
@@ -201,21 +189,19 @@ export function ChatDetail({ chatId, chatName, chatAvatar, onBack }: ChatDetailP
           </div>
         )}
 
-        {showScrollButton && (
-          <button
-            onClick={() => scrollToBottom(false)}
-            className="absolute bottom-4 right-8 bg-white dark:bg-received-bubble-dark-bg p-2 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 z-20 hover:bg-gray-100 dark:hover:bg-[#2a3942] transition-all"
+        <button
+          onClick={() => scrollToBottom(false)}
+          className="absolute bottom-4 right-8 bg-white dark:bg-received-bubble-dark-bg p-2 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 z-100 hover:bg-gray-100 dark:hover:bg-[#2a3942] transition-all"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="24"
+            height="24"
+            className="fill-current text-gray-600 dark:text-gray-400"
           >
-            <svg
-              viewBox="0 0 24 24"
-              width="24"
-              height="24"
-              className="fill-current text-gray-600 dark:text-gray-400"
-            >
-              <path d="M12 16.17L4.83 9L3.41 10.41L12 19L20.59 10.41L19.17 9L12 16.17Z" />
-            </svg>
-          </button>
-        )}
+            <path d="M12 16.17L4.83 9L3.41 10.41L12 19L20.59 10.41L19.17 9L12 16.17Z" />
+          </svg>
+        </button>
 
         <div className={clsx("h-full", (!isReady || initialLoad) && "invisible")}>
           <MessageList
@@ -225,7 +211,6 @@ export function ChatDetail({ chatId, chatName, chatAvatar, onBack }: ChatDetailP
             sentMediaCache={sentMediaCache}
             onReply={setReplyingTo}
             onLoadMore={loadMoreMessages}
-            onRangeChanged={handleScrollRangeChanged}
             firstItemIndex={firstItemIndex}
             isLoading={isLoadingMore}
             hasMore={hasMore}
